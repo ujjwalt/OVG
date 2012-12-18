@@ -1,0 +1,3 @@
+[submodule "hagoop"]
+	path = hagoop
+	url = https://ujjwalt@github.com/ujjwalt/hagoop.git
