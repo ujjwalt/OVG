@@ -1,0 +1,12 @@
+// This file is going provide interface to Sandboxed Appn to get host list and communicate with host
+
+package main
+
+import (
+"fmt"
+"io"
+"net"
+"net/http"
+"net/rpc"
+"os"
+)
