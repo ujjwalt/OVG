@@ -1,33 +1,29 @@
-//Server will manage the communication with all host-replacing bad host-credit management
+//server code to manage the project communication interface
+
 package main
-func main(){
 
-getHostList(); 
+import (
+   "crypto/md5"
+   "flag"
+   "fmt"
+   "io"
+   "log"
+   "os"
+   "os/user"
+)
 
-sendMessage();
+var (
+   uname = flag.String("u", "username", "Enter your username")
+   passwd = flag.String("p", "password", "Enter your password")
+    currentUser, _ = user.Current()
+   libPath = currentUser.HomeDir + "/Library/OVG/"
+   configPath = libPath + "config.json"
+   err error // generic error
+)
 
-recMessage();
-checkAlive();
-replaceWorker();
+type projectT struct {
+   id string
+   folder string
+   cpu int64
 }
 
-func getHostList() []string {
-//On server details about all the hosts would be there, so fetch host list and return
-func (db *DB) QueryRow(query string, args ...interface{}) *Row
-//QueryRow executes a query that is expected to return at most one row.
-var s NullString
-err := db.QueryRow("SELECT id FROM db WHERE", id).Scan(&s)
-if s.Valid {
-   // use s.String
-} else {
-   // NULL value
-}
-// Scan scans text read from standard input, storing successive
-// space-separated values into successive arguments.  Newlines count
-// as space.  It returns the number of items successfully scanned.
-//return s
-**}**
-
-func sendMessage() []string {
-
-}
