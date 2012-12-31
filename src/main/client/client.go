@@ -18,14 +18,19 @@
 package main
 
 import (
-	"crypto/md5"
+	// "crypto/md5"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	// "../ovg"
+	"github.com/cloudfoundry/gosigar"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/user"
+	"time"
 )
 
 var (
@@ -34,9 +39,8 @@ var (
 	config         configT  // memory model of config.json
 	configF        *os.File // file pointer to config.json
 	currentUser, _ = user.Current()
-	libPath        = currentUser.HomeDir + "/Library/OVG/"
-	configPath     = libPath + "config.json"
-	err            error // generic error
+	libPath        = currentUser.HomeDir + "/Library/OVG/" // path to the user's library
+	configPath     = libPath + "config.json"               // path to the config file
 )
 
 type projectT struct {
@@ -60,12 +64,11 @@ func main() {
 	// create the lib directory
 	fatal(os.MkdirAll(libPath, 0700))
 	fatal(os.Chdir(libPath))
+	var err error
 	configF, err = os.OpenFile(configPath, os.O_RDWR, 0644) // only readable and writable by current user
 	if err != nil {
 		configF, err = os.OpenFile(configPath, os.O_RDWR|os.O_CREATE, 0644)
 		fatal(err)
-		/*_, err = configF.WriteString(emptyConfigTemplate) // write out th empty template
-		fatal(err)*/
 	} else {
 		readConfig()
 	}
@@ -75,7 +78,35 @@ func main() {
 	h := md5.New() // convert the password to md5
 	io.WriteString(h, *passwd)
 	config.Password = fmt.Sprintf("%x", h.Sum(nil))
-	writeConfig()
+	defer writeConfig() // write out whenever you quit
+	// Request work every time the free RAM reaches >= 25% of total RAM.
+	// Keep requesting work whenever you get a notification for the system to be idle and start it off
+	ch := make(chan time.Time, 10)
+	notifyIdleSystem(ch)
+	for t := range ch {
+		// request work from the server
+		go requestWork()
+	}
+}
+
+func requestWork() {
+	resp, err := http.Get("http://api.domain.com/work")
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+}
+
+func notifyIdleSystem(ch chan time.Time) {
+	t := time.Tick(30 * time.Second)
+	mem := new(sigar.Mem)
+	for t1 := range t {
+		mem.Get()
+		if mem.Free >= 0.25*mem.Total {
+			ch <- t1
+		}
+	}
 }
 
 func fatal(err error) {
