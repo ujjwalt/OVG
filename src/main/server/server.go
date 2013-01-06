@@ -1,29 +1,60 @@
-//server code to manage the project communication interface
+//server.go will provide the interface for communicating and handling hosts
 
-package main
+// workerDead(message string), send the message and wait for ack, if no ack means worker dead
 
-import (
-   "crypto/md5"
-   "flag"
-   "fmt"
-   "io"
-   "log"
-   "os"
-   "os/user"
+package 
+main
+import(
+   
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/rpc"
+	"path"
+	"os"
 )
 
-var (
-   uname = flag.String("u", "username", "Enter your username")
-   passwd = flag.String("p", "password", "Enter your password")
-    currentUser, _ = user.Current()
-   libPath = currentUser.HomeDir + "/Library/OVG/"
-   configPath = libPath + "config.json"
-   err error // generic error
-)
-
-type projectT struct {
-   id string
-   folder string
-   cpu int64
+type Flag int
+type Args struct{
+	message string
 }
+func main() {
+
+	flag := new(Flag)
+	rpc.Register(flag)
+	rpc.HandleHTTP()
+	err := http.ListenAndServe(":1234", nil)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+//Worker counts the number of hosts
+func workerCount() int
+{
+	return db.runCommand( { count: 'id' } )
+}
+
+// Returns an array of the distinct values of field id from all documents in the workers collection
+func Worker(worker int) []string{
+return db.runCommand ({ distinct: 'workers', key: 'id' } ) 
+}
+
+func Message(worker int, message string, args *Args , reply *int) chan bool {
+	*reply="true"
+if(*reply==nill){
+	fmt.Println("Worker dead")
+	//replaceWorker();
+	}
+return nil
+}
+func replaceWorker(worker_id int,project_id int)
+{
+
+}
+		
+
+
+
 
