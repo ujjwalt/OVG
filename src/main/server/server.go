@@ -33,12 +33,12 @@ func main() {
 //Worker counts the number of hosts
 func workerCount() int
 {
-	return db.runCommand( { count: 'id' } )
+	return db.runCommand( { count: 'id' } ) //mongodb command to count the id
 }
 
 // Returns an array of the distinct values of field id from all documents in the workers collection
 func Worker(worker int) []string{
-return db.runCommand ({ distinct: 'workers', key: 'id' } ) 
+return db.runCommand ({ distinct: 'workers', key: 'id' } ) ////mongodb command to get the array of list of workers
 }
 
 func Message(worker int, message string, args *Args , reply *int) chan bool {
@@ -49,9 +49,16 @@ if(*reply==nill){
 	}
 return nil
 }
+//Replace dead worker of particular project with fresh worker
 func replaceWorker(worker_id int,project_id int)
 {
-
+	db.workers.update(  //this query updates workers collection with id=worker_id(id of dead worker)
+   { _id: worker_id, _project_id: project_id },
+   {
+     //$set: { ' ': 'Warner' },
+   }
+)
+	
 }
 		
 
