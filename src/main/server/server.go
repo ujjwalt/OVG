@@ -52,7 +52,7 @@ func Message(worker int, message string, args *Args , reply *int) chan bool {
 	*reply="true"
 if(*reply==nill){
 	fmt.Println("Worker dead")
-	//replaceWorker();
+	replaceWorker();
 	}
 return nil
 }
