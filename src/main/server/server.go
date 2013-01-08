@@ -48,11 +48,19 @@ func Worker(worker int) []string{
 func Message(worker int, message string, args *Args , reply *int) chan bool {
 	
 	
-	Dial("tcp","192.168.23.12") //IP address of host 
-	*reply="true"
-if(*reply==nill){
-	fmt.Println("Worker dead")
-	replaceWorker();
+	server, err :=rpc.Dial("tcp","192.168.23.12") //Serve Dials here to send message to host, IP address here is of host 
+	if(err!=nil){
+		log.Fatal("Dialing", err)
+	}
+	var reply bool
+	args:=Args{message};
+	err = server.Call(args,&reply);
+	if(err!=nil){
+		log.Fatal("Dialing", err)
+		replaceWorker(); // No reply from worker then call to replace worker
+	}
+	fmt.Println("Reply from host", reply);
+	
 	}
 return nil
 }
