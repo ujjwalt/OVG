@@ -2,82 +2,36 @@
 
 // workerDead(message string), send the message and wait for ack, if no ack means worker dead
 
-package 
-main
-import(
-   
+package main
+
+import (
 	"fmt"
+	"github.com/ujjwalt/ovg/src/main/ovg"
 	"io"
 	"net"
 	"net/http"
 	"net/rpc"
-	"path"
 	"os"
+	"path"
 )
 
 type Flag int
-type Args struct{
+type Args struct {
 	message string
 }
+
 func main() {
 
 	flag := new(Flag)
 	rpc.Register(flag)
 	rpc.HandleHTTP()
 	err := http.ListenAndServe(":1234", nil) //ListenAndServe starts an HTTP server with a given address and handler. 
-						//The handler is usually nil, which means to use DefaultServeMux. 
+	//The handler is usually nil, which means to use DefaultServeMux. 
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 }
 
-//Worker counts the number of hosts
-func workerCount() int
-{
-	return db.runCommand( { count: 'id' } ) //mongodb command to count the id
-}
-
-// Returns an array of the distinct values of field id from all documents in the workers collection
-//In mongodb document is analogous to rdbms table and collection is record
-
-func Worker(worker int) []string{
-	return db.runCommand ({ distinct: 'workers', key: 'id' } ) //mongodb command to get the array of list of 
-								   //workers for column id
-}
-
-func Message(worker int, message string, args *Args , reply *int) chan bool {
-	
-	
-	server, err :=rpc.Dial("tcp","192.168.23.12") //Serve Dials here to send message to host, IP address here is of host 
-	if(err!=nil){
-		log.Fatal("Dialing", err)
-	}
-	var reply bool
-	args:=Args{message};
-	err = server.Call(args,&reply);
-	if(err!=nil){
-		log.Fatal("Dialing", err)
-		replaceWorker(); // No reply from worker then call to replace worker
-	}
-	fmt.Println("Reply from host", reply);
-	
-	}
-return nil
-}
-//Replace dead worker of particular project with fresh worker
-func replaceWorker(worker_id int,project_id int)
-{
-	db.workers.update(  //this query updates workers collection with id=worker_id(id of dead worker)
-   { _id: worker_id, _project_id: project_id },
-   {
-     //$set: { ' ': 'Warner' },
-   }
-		
-)
-	
-}
-		
-
-
-
-
+/*
+TODO: Implement rpc methods to facilitate registration and message sending through the ovg package
+*/
