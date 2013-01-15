@@ -1,8 +1,7 @@
 /*
    Format of the json file used for saving configuration is as follows :-
    {
-       "username" : "username",
-       "password": "password_as_md5"
+       "auth": "username:password",
        "projects" : [
            {
                "id": "project id"
@@ -17,12 +16,18 @@
 */
 package main
 
+/*
+#include <unistd.h>
+*/
+
 import (
 	// "crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"os/exec"
 	// "../ovg"
 	"github.com/cloudfoundry/gosigar"
 	"io/ioutil"
@@ -30,6 +35,8 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+	"path"
+	"syscall"
 	"time"
 )
 
@@ -43,6 +50,10 @@ var (
 	configPath     = libPath + "config.json"               // path to the config file
 )
 
+const (
+	workURL = "http://api.domain.com/work"
+)
+
 type projectT struct {
 	id     string
 	folder string
@@ -50,8 +61,7 @@ type projectT struct {
 }
 
 type configT struct {
-	Username string
-	Password string
+	auth     string
 	Projects []projectT
 }
 
@@ -73,11 +83,9 @@ func main() {
 		readConfig()
 	}
 	defer configF.Close()
-	// store the username and password
-	config.Username = *uname
-	h := md5.New() // convert the password to md5
-	io.WriteString(h, *passwd)
-	config.Password = fmt.Sprintf("%x", h.Sum(nil))
+	// store username:password encoded as base64
+	config.auth = *uname + ":" + *passwd
+	config.auth = base64.StdEncoding.EncodeToString([]byte(config.auth))
 	defer writeConfig() // write out whenever you quit
 	// Request work every time the free RAM reaches >= 25% of total RAM.
 	// Keep requesting work whenever you get a notification for the system to be idle and start it off
@@ -90,12 +98,37 @@ func main() {
 }
 
 func requestWork() {
-	resp, err := http.Get("http://api.domain.com/work")
+	client := &http.Client{}
+	resp, err := client.Get(workURL)
+	req, err := http.NewRequest("GET", workURL, nil)
+	req.Header.Add("Authorization", `Basic `+config.auth)
+	resp, err = client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	m := make(map[string]interface{})
+	json.Unmarshal(body, m)
+	files := m["files"]
+	fileNames := m["fileNames"]
+	var mainFile *os.File
+	var mainFilePath string
+	for i, f := range files {
+		fh, err := os.Open(path.Join(os.TempDir(), m["id"], fileNames[i])) // tmp_dir/project_id/filename
+		fatal(err)
+		defer fh.Close()
+		b, err := base64.StdEncoding.DecodeString(f)
+		fh.Write(b)
+		if fileNames[i] == "main" {
+			mainFile = fh
+			mainFilePath = path.Join(os.TempDir(), m["id"], "main")
+		}
+	}
+	// fork off "main" and run it in a sandbox
+	if pid := int(C.fork()); !pid {
+		// child process
+	}
 }
 
 func notifyIdleSystem(ch chan time.Time) {

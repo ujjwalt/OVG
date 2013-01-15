@@ -1,5 +1,10 @@
 package ovg
 
+import (
+	"net"
+	"net/rpc"
+)
+
 type ProjectNotifier interface {
 	/*
 	   This call indicates that a particular worker has become unresponsive. The arguments passed are :-
@@ -20,6 +25,8 @@ type ProjectNotifier interface {
 type serverDelegate struct {
 	// the number of workers assigned initially to the project
 	workers int
+	// Addressses of the workers
+	workerAdresses []net.TCPAddr
 	// id of the project this delegate represents
 	projectID string
 }
@@ -28,8 +35,17 @@ func (s serverDelegate) Workers() int {
 	return s.workers
 }
 
-func (s serverDelegate) Message(worker int, message string, arg interface{}, reply interface{}) chan bool {
-	return s.workers
+func (s serverDelegate) Message(worker int, message string, args interface{}, reply interface{}) error {
+	// determine the ip address from the worker id and its port address
+	var ipAddress, port string
+	ipAddress = "192.168.1.100"
+	port = "4600"
+	client, err := rpc.DialHTTP("tcp", ipAddress+":"+port)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	return client.Call(message, args, reply)
 }
 
 // This is the type of objects
@@ -52,7 +68,7 @@ type ServerDelegator interface {
 	       * reply - The reply from the worker will be stored here. It should always be a pointer. There is no checking but not doing
 	           so will simply fail for obvious reasons.
 
-	   A single result is returned - a singly buffered boolean channel which signals wether the request succeeded or not.
+	   It is a blocking call.
 	*/
 	Message(worker int, message string, arg interface{}, reply interface{}) chan bool
 }
