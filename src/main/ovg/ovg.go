@@ -21,7 +21,7 @@ type ProjectNotifier interface {
 	           it retains the same id i.e. deadWorker
 	*/
 	
-	WorkerDead(deadWorker int, replaced bool)
+	WorkerDead(deadWorker int, replaced bool, project_id string, ip int)
 	
 	/*
 	   This call signals that a new worker is available for this project and should be added to the list of workers. The single argument
@@ -92,8 +92,13 @@ func Register(p ProjectNotify) ServerDelegator {
 	db.serverdb.insert({p.workers, p.projectID, p.ip})		
 }
 	
-func (p ProjectNotifier) WorkerDead(deadWorker int, replaced bool) {
-	
+func (p ProjectNotifier) WorkerDead(deadWorker int, replaced bool, project_id string, ip int) {
+	if replaced == true {
+		return
+	}
+	else {
+		p.NewWorker(newWorker int, project_id string, ip int)
+	}
 } 
 func (p ProjectNotifier) NewWorker(newWorker int, project_id string, ip int) {
 	db.serverdb.insert({p.workers, p.projectID, p.ip})		
